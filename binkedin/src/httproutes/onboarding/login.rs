@@ -41,16 +41,14 @@ async fn login_handler(
         password: None,
     });
 
-    let datae: Option<String> = data.email.clone();
-
     let user = User {
-        email: data.email.unwrap_or("NULL".to_string()),
+        email: data.email.clone().unwrap_or("NULL".to_string()),
         password: data.password.unwrap_or("NULL".to_string()),
-        does_exits: if datae == None { false } else { true },
+        does_exits: if data.email == None { false } else { true },
     };
     (StatusCode::OK, Json(user))
 }
-
+// hello
 #[derive(Serialize)]
 struct User {
     email: String,
