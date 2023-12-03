@@ -1,8 +1,4 @@
 
-CREATE TABLE users (email VARCHAR(100),
-                          password VARCHAR(12));
+CREATE TABLE users (email VARCHAR(100) NOT NULL PRIMARY KEY,
+                                                        password VARCHAR(12) NOT NULL);
 
-
-INSERT INTO users
-VALUES ('krishnautiyal.kn@gmail.com',
-        '123456') ;
