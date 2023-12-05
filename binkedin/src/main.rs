@@ -1,6 +1,7 @@
 use axum::{
     extract::State,
     http::StatusCode,
+    middleware,
     routing::{get, post},
     Json, Router,
 };
@@ -35,7 +36,13 @@ async fn main() {
         // .route("/", get(root))
         // // `POST /users` goes to `create_user`
         // .route("/users", post(create_user))
+        .route("/test", post(create_user))
+        .layer(axum::middleware::from_fn_with_state(
+            ctx.clone(),
+            httproutes::authorisation_middleware::authorisation_middleware_function,
+        ))
         .nest("/api", httproutes::onboarding::login::router(ctx));
+
     // .with_state(ctx);
 
     // run our app with hyper, listening globally on port 3000
