@@ -3,7 +3,7 @@ use axum::{
     extract::{Request, State},
     http::{self, response, HeaderMap, StatusCode},
     middleware::{self, Next},
-    response::Response,
+    response::{ErrorResponse, IntoResponse, Response},
     routing::get,
     Error, Json, Router,
 };
@@ -24,7 +24,7 @@ pub async fn authorisation_middleware_function(
     headers: HeaderMap,
     request: Request,
     next: Next,
-) -> Response {
+) -> impl IntoResponse {
     // do something with `request`...
 
     if headers.contains_key("password") && headers.contains_key("email") {
@@ -47,12 +47,11 @@ pub async fn authorisation_middleware_function(
 
                     return response;
                 } else {
-                    let response =
-                        Response::new(Body::new("INVALID EMAIL OR PASSWORD".to_string()));
-                    let (mut parts, body) = response.into_parts();
-                    parts.status = StatusCode::UNAUTHORIZED;
-                    let response = Response::from_parts(parts, body);
-                    return response;
+                    let response = CustomErrorResponse::new(
+                        "INVALID EMAIL OR PASSWORD".to_string(),
+                        StatusCode::UNAUTHORIZED,
+                    );
+                    return response.into_response();
                 }
             }
 
@@ -60,12 +59,11 @@ pub async fn authorisation_middleware_function(
                 let err = err;
                 match err {
                     sqlx::Error::RowNotFound => {
-                        let response =
-                            Response::new(Body::new("PLEASE REGISTER TO CONTNUE".to_string()));
-                        let (mut parts, body) = response.into_parts();
-                        parts.status = StatusCode::UNAUTHORIZED;
-                        let response = Response::from_parts(parts, body);
-                        return response;
+                        let response = CustomErrorResponse::new(
+                            "PLEASE REGISTER".to_string(),
+                            StatusCode::NOT_FOUND,
+                        );
+                        return response.into_response();
                     }
                     _ => {
                         println!("NEW ERROR");
@@ -75,10 +73,38 @@ pub async fn authorisation_middleware_function(
             }
         }
     } else {
-        panic!()
+        let response = CustomErrorResponse::new(
+            "ADD email And password TO THE HEADERS ".to_string(),
+            StatusCode::BAD_REQUEST,
+        );
+        return response.into_response();
     }
 }
 
 struct Password {
     password: String,
+}
+
+struct CustomErrorResponse {
+    info: String,
+    status_code: StatusCode,
+}
+
+impl CustomErrorResponse {
+    fn new(info: String, status_code: StatusCode) -> Self {
+        Self {
+            info: info,
+            status_code,
+        }
+    }
+}
+
+impl IntoResponse for CustomErrorResponse {
+    fn into_response(self) -> Response {
+        let response = Response::new(Body::new(self.info));
+        let (mut parts, body) = response.into_parts();
+        parts.status = self.status_code;
+        let response = Response::from_parts(parts, body);
+        response
+    }
 }
