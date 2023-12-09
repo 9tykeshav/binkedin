@@ -66,7 +66,7 @@ async fn handle_post(
                 path::Path::new("D:\\binkedinMedia\\g.png"),
                 image::ImageFormat::Png,
             ) {
-                Ok(g) => {}
+                Ok(_) => {}
                 Err(e) => {
                     return Err((
                         StatusCode::BAD_REQUEST,
