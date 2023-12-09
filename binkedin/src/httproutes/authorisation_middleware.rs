@@ -1,23 +1,12 @@
 use axum::{
     body::Body,
     extract::{Request, State},
-    http::{self, response, HeaderMap, StatusCode},
-    middleware::{self, Next},
-    response::{ErrorResponse, IntoResponse, Response},
-    routing::get,
-    Error, Json, Router,
+    http::{HeaderMap, StatusCode},
+    middleware::Next,
+    response::{IntoResponse, Response},
 };
-
 use core::panic;
-use serde::{Deserialize, Serialize};
-use sqlx::{error, Row};
-use sqlx::{
-    pool,
-    postgres::{PgPool, PgPoolOptions},
-    query,
-};
-use sqlx::{postgres::PgQueryResult, query_as};
-use std::time::Duration;
+use sqlx::query_as;
 
 pub async fn authorisation_middleware_function(
     State(ctx): State<crate::Ctx>,
@@ -39,7 +28,6 @@ pub async fn authorisation_middleware_function(
         .await;
         match password_fetched {
             Ok(password) => {
-                let does_exits = false;
                 if password.password == password_recived.to_str().unwrap() {
                     let response = next.run(request).await;
 

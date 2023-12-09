@@ -1,26 +1,19 @@
 use axum::{
-    body::{Body, Bytes},
+    body::Bytes,
+    debug_handler,
     extract::Multipart,
-    extract::{Request, State},
-    http::{self, response, HeaderMap, StatusCode},
-    middleware::{self, Next},
-    response::{ErrorResponse, IntoResponse, Response},
-    routing::{get, post, Route},
-    Error, Json, Router,
+    extract::State,
+    http::{HeaderMap, StatusCode},
+    routing::post,
+    Json, Router,
 };
 use core::panic;
 use image;
 use serde::{Deserialize, Serialize};
-use sqlx::{error, Row};
-use sqlx::{
-    pool,
-    postgres::{PgPool, PgPoolOptions},
-    query,
-};
-use sqlx::{postgres::PgQueryResult, query_as};
-use std::{path, string, time::Duration};
-
-use super::onboarding::login::router;
+use sqlx::query;
+use std::path;
+use std::time::{SystemTime, UNIX_EPOCH};
+use uuid;
 
 pub fn post_routes<S>(state: crate::Ctx) -> Router<S> {
     Router::new()
@@ -28,16 +21,18 @@ pub fn post_routes<S>(state: crate::Ctx) -> Router<S> {
         .with_state(state)
 }
 
+#[debug_handler]
 async fn handle_post(
+    State(ctx): State<crate::Ctx>,
+    headers: HeaderMap,
     mut multipart: Multipart,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorInfo>)> {
     let mut json_bytes = Bytes::default();
     let mut image_bytes = Bytes::default();
     let mut json: Json<JsonData> = Json(JsonData {
-        date: 0,
         caption: "".to_string(),
     });
-    while let Some(mut field) = multipart.next_field().await.unwrap() {
+    while let Some(field) = multipart.next_field().await.unwrap() {
         println!("we are at the top of the while loop!!");
         let name = field.name().unwrap().to_string();
         if name == "data" {
@@ -60,34 +55,109 @@ async fn handle_post(
         }
     }
 
-    match image::load_from_memory_with_format(&image_bytes, image::ImageFormat::Png) {
-        Ok(image) => {
-            match image.save_with_format(
-                path::Path::new("D:\\binkedinMedia\\g.png"),
-                image::ImageFormat::Png,
-            ) {
-                Ok(_) => {}
-                Err(e) => {
-                    return Err((
-                        StatusCode::BAD_REQUEST,
-                        Json(ErrorInfo {
-                            info: e.to_string(),
-                        }),
-                    ));
+    let dyn_image;
+
+    let post_path = uuid::Uuid::new_v4().to_string();
+    let email = headers.get("email").unwrap().to_str().unwrap().to_string();
+    let time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+        .to_string();
+
+    if !image_bytes.is_empty() {
+        match image::load_from_memory_with_format(&image_bytes, image::ImageFormat::Png) {
+            Ok(image) => {
+                dyn_image = image;
+
+                match dyn_image.save_with_format(
+                    path::Path::new(&format!("D:\\binkedinMedia\\{}.png", post_path)),
+                    image::ImageFormat::Png,
+                ) {
+                    Ok(_) => {
+                        let query_result = query!(
+                            "
+                            INSERT INTO posts
+                            (user_email, caption, image_url, 
+                            post_like_count, post_comment_count, 
+                            post_time) 
+                            VALUES ($1, $2, $3,$4,$5,$6)",
+                            email,
+                            json.caption,
+                            post_path,
+                            0,
+                            0,
+                            time
+                        )
+                        .execute(&ctx.db)
+                        .await;
+
+                        match query_result {
+                            Ok(o) => {
+                                println!("{:?}", o);
+                                Ok(StatusCode::CREATED)
+                            }
+                            Err(error) => {
+                                return Err((
+                                    StatusCode::INTERNAL_SERVER_ERROR,
+                                    Json(ErrorInfo {
+                                        info: error.to_string(),
+                                    }),
+                                ))
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        return Err((
+                            StatusCode::BAD_REQUEST,
+                            Json(ErrorInfo {
+                                info: e.to_string(),
+                            }),
+                        ));
+                    }
                 }
             }
+            Err(e) => {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorInfo {
+                        info: e.to_string(),
+                    }),
+                ));
+            }
         }
-        Err(e) => {
-            return Err((
-                StatusCode::BAD_REQUEST,
-                Json(ErrorInfo {
-                    info: e.to_string(),
-                }),
-            ));
+    } else {
+        let query_result = query!(
+            "
+                            INSERT INTO posts
+                            (user_email, caption, 
+                            post_like_count, post_comment_count, 
+                            post_time) 
+                            VALUES ($1, $2, $3,$4,$5)",
+            email,
+            json.caption,
+            0,
+            0,
+            time
+        )
+        .execute(&ctx.db)
+        .await;
+
+        match query_result {
+            Ok(o) => {
+                println!("{:?}", o);
+                return Ok(StatusCode::CREATED);
+            }
+            Err(error) => {
+                return Err((
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ErrorInfo {
+                        info: error.to_string(),
+                    }),
+                ))
+            }
         }
     }
-
-    Ok(StatusCode::OK)
 }
 
 #[derive(Serialize, Deserialize)]
@@ -96,6 +166,5 @@ struct ErrorInfo {
 }
 #[derive(Serialize, Deserialize)]
 struct JsonData {
-    date: i64,
     caption: String,
 }

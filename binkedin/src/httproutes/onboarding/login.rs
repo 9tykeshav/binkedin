@@ -3,19 +3,10 @@ use axum::{
     extract::State,
     http::StatusCode,
     routing::{get, post},
-    Error, Json, Router,
+    Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{error, Row};
-use sqlx::{
-    pool,
-    postgres::{PgPool, PgPoolOptions},
-    query,
-};
-use sqlx::{postgres::PgQueryResult, query_as};
-use std::time::Duration;
-
-use crate::Ctx;
+use sqlx::query_as;
 
 pub fn router<S>(state: crate::Ctx) -> Router<S> {
     let router = Router::new()
@@ -27,17 +18,16 @@ pub fn router<S>(state: crate::Ctx) -> Router<S> {
 
 async fn login_handler(
     State(ctx): State<crate::Ctx>,
-    Json(payload): Json<Login_data>,
+    Json(payload): Json<LoginData>,
 ) -> (StatusCode, Json<User>) {
-    let mut does_exist = false;
     let data = query_as!(
-        db_data,
+        DbData,
         "SELECT * FROM users WHERE email = $1",
         payload.email
     )
     .fetch_one(&ctx.db)
     .await
-    .unwrap_or(db_data {
+    .unwrap_or(DbData {
         email: None,
         password: None,
     });
@@ -59,8 +49,8 @@ async fn login_handler(
 #[debug_handler]
 async fn register(
     State(ctx): State<crate::Ctx>,
-    Json(payload): Json<Login_data>,
-) -> (StatusCode, Json<Register_user_data>) {
+    Json(payload): Json<LoginData>,
+) -> (StatusCode, Json<RegisterUserData>) {
     let query = sqlx::query!(
         "INSERT INTO users VALUES($1, $2)",
         payload.email,
@@ -69,20 +59,20 @@ async fn register(
     .execute(&ctx.db)
     .await;
     match query {
-        Ok(PgQueryResult) => (
+        Ok(_pg_query_result) => (
             StatusCode::CREATED,
-            Json(Register_user_data {
+            Json(RegisterUserData {
                 email: payload.email,
                 password: payload.password,
                 info: "SUCCESS".to_string(),
             }),
         ),
-        Err(Error) => {
-            let errr = Error.as_database_error();
+        Err(error) => {
+            let errr = error.as_database_error();
             match errr.unwrap().kind() {
                 sqlx::error::ErrorKind::UniqueViolation => (
                     StatusCode::CONFLICT,
-                    Json(Register_user_data {
+                    Json(RegisterUserData {
                         email: payload.email,
                         password: payload.password,
                         info: "USER ALREADY EXISTS".to_string(),
@@ -92,7 +82,7 @@ async fn register(
                     println!("{}", errr.unwrap());
                     (
                         StatusCode::INTERNAL_SERVER_ERROR,
-                        Json(Register_user_data {
+                        Json(RegisterUserData {
                             email: payload.email,
                             password: payload.password,
                             info: "INTERNAL SERVER ERROR ".to_string(),
@@ -112,19 +102,19 @@ struct User {
     does_exits: bool,
 }
 #[derive(Deserialize, Serialize)]
-struct Login_data {
+struct LoginData {
     email: String,
     password: String,
 }
 
 #[derive(Debug)]
-struct db_data {
+struct DbData {
     email: Option<String>,
     password: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
-struct Register_user_data {
+struct RegisterUserData {
     email: String,
     password: String,
     info: String,
