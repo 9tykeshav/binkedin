@@ -10,14 +10,14 @@ use axum::{
 use core::panic;
 use image;
 use serde::{Deserialize, Serialize};
-use sqlx::query;
+use sqlx::{query, query_as};
 use std::path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid;
 
 pub fn post_routes<S>(state: crate::Ctx) -> Router<S> {
     Router::new()
-        .route("/post", post(handle_post))
+        .route("/post", post(handle_post).get(get_posts))
         .with_state(state)
 }
 
@@ -159,6 +159,29 @@ async fn handle_post(
         }
     }
 }
+#[debug_handler]
+async fn get_posts(
+    State(ctx): State<crate::Ctx>,
+    Json(payload): Json<GetPostData>,
+) -> Result<(StatusCode, Json<Vec<Post>>), (StatusCode, Json<String>)> {
+    let email = payload.email;
+    let data_fetched = query_as!(
+        Post,
+        "SELECT post_id ,caption ,image_url 
+                                ,post_like_count ,post_comment_count 
+                                ,post_time FROM posts WHERE user_email = $1",
+        email
+    )
+    .fetch_all(&ctx.db)
+    .await;
+
+    match data_fetched {
+        Ok(d) => {
+            return Ok((StatusCode::FOUND, Json(d)));
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 struct ErrorInfo {
@@ -167,4 +190,17 @@ struct ErrorInfo {
 #[derive(Serialize, Deserialize)]
 struct JsonData {
     caption: String,
+}
+#[derive(Serialize, Deserialize)]
+struct GetPostData {
+    email: String,
+}
+#[derive(Serialize, Deserialize)]
+struct Post {
+    post_id: i32,
+    caption: Option<String>,
+    image_url: Option<String>,
+    post_like_count: i32,
+    post_comment_count: i32,
+    post_time: String,
 }

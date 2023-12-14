@@ -17,3 +17,8 @@ User-Agent: HTTPie
 - SAME AS LOGIN ;
 - returns internal server error for duplicate entry and 201 for sucess 
 - refer to info field returned  
+
+
+
+# post
+- we have a blunder

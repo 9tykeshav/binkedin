@@ -22,6 +22,7 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .nest("/api", httproutes::posts::post_routes(ctx.clone()))
+        .nest("/api", httproutes::comments::comments_routes(ctx.clone()))
         .layer(axum::middleware::from_fn_with_state(
             ctx.clone(),
             httproutes::authorisation_middleware::authorisation_middleware_function,
