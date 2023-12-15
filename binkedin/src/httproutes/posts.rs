@@ -56,7 +56,6 @@ async fn handle_post(
     }
 
     let dyn_image;
-
     let post_path = uuid::Uuid::new_v4().to_string();
     let email = headers.get("email").unwrap().to_str().unwrap().to_string();
     let time = SystemTime::now()
