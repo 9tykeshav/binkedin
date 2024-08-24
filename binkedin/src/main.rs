@@ -39,9 +39,11 @@ async fn main() {
 struct User {
     username: String,
     password: String,
+
 }
 
 #[derive(Clone)]
 struct Ctx {
     db: sqlx::Pool<Postgres>,
 }
+
