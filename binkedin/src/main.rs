@@ -1,19 +1,22 @@
 use axum::Router;
-use serde::Serialize;
+
 use sqlx::{postgres::PgPoolOptions, Postgres};
 mod httproutes;
-
+use dotenv::dotenv;
 use std::time::Duration;
-
 #[tokio::main]
 async fn main() {
     // initialize tracing
     tracing_subscriber::fmt::init();
+    dotenv().ok();
+    // TODO : check all neccesary vars 
+
+    
 
     let pool: sqlx::Pool<Postgres> = PgPoolOptions::new()
         .max_connections(5)
         .acquire_timeout(Duration::from_secs(3))
-        .connect("postgres://postgres:1234@localhost/binkedin")
+        .connect(&std::env::var("DATABASE_URL").unwrap())
         .await
         .expect("can't connect to database");
 
@@ -35,12 +38,7 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-#[derive(Serialize)]
-struct User {
-    username: String,
-    password: String,
 
-}
 
 #[derive(Clone)]
 struct Ctx {

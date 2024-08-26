@@ -39,6 +39,10 @@ async fn handle_post(
             json_bytes = field.bytes().await.unwrap();
         } else if name == "image" {
             image_bytes = field.bytes().await.unwrap();
+        } else  {
+            return Err((StatusCode::BAD_REQUEST, Json(ErrorInfo {
+                info: "please enter some data??".to_string(),
+            })))
         }
         match Json::<JsonData>::from_bytes(&json_bytes) {
             Ok(j) => {
@@ -68,9 +72,11 @@ async fn handle_post(
         match image::load_from_memory_with_format(&image_bytes, image::ImageFormat::Png) {
             Ok(image) => {
                 dyn_image = image;
+                
 
+                
                 match dyn_image.save_with_format(
-                    path::Path::new(&format!("D:\\binkedinMedia\\{}.png", post_path)),
+                    path::Path::new(&format!("{}\\{}.png",(&std::env::var("BINKEDIN_MEDIA").unwrap()),  post_path)),
                     image::ImageFormat::Png,
                 ) {
                     Ok(_) => {
