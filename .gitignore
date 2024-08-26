@@ -1,1 +1,2 @@
-C:\projects\Binkedin\binkedin\.env
+DATABASE_URL = 
+BINKEDIN_MEDIA = 
