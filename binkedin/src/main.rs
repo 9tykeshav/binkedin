@@ -9,9 +9,7 @@ async fn main() {
     // initialize tracing
     tracing_subscriber::fmt::init();
     dotenv().ok();
-    // TODO : check all neccesary vars 
-
-    
+    // TODO : check all neccesary vars
 
     let pool: sqlx::Pool<Postgres> = PgPoolOptions::new()
         .max_connections(5)
@@ -38,10 +36,7 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-
-
 #[derive(Clone)]
 struct Ctx {
     db: sqlx::Pool<Postgres>,
 }
-

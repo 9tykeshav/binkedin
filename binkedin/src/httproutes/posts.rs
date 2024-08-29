@@ -17,7 +17,10 @@ use uuid;
 
 pub fn post_routes<S>(state: crate::Ctx) -> Router<S> {
     Router::new()
-        .route("/post", post(handle_post).get(get_posts))
+        .route(
+            "/post",
+            post(handle_post).get(get_posts).delete(delete_post),
+        )
         .with_state(state)
 }
 
@@ -39,10 +42,13 @@ async fn handle_post(
             json_bytes = field.bytes().await.unwrap();
         } else if name == "image" {
             image_bytes = field.bytes().await.unwrap();
-        } else  {
-            return Err((StatusCode::BAD_REQUEST, Json(ErrorInfo {
-                info: "please enter some data??".to_string(),
-            })))
+        } else {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(ErrorInfo {
+                    info: "please enter some data??".to_string(),
+                }),
+            ));
         }
         match Json::<JsonData>::from_bytes(&json_bytes) {
             Ok(j) => {
@@ -72,11 +78,13 @@ async fn handle_post(
         match image::load_from_memory_with_format(&image_bytes, image::ImageFormat::Png) {
             Ok(image) => {
                 dyn_image = image;
-                
 
-                
                 match dyn_image.save_with_format(
-                    path::Path::new(&format!("{}\\{}.png",(&std::env::var("BINKEDIN_MEDIA").unwrap()),  post_path)),
+                    path::Path::new(&format!(
+                        "{}\\{}.png",
+                        (&std::env::var("BINKEDIN_MEDIA").unwrap()),
+                        post_path
+                    )),
                     image::ImageFormat::Png,
                 ) {
                     Ok(_) => {
@@ -188,6 +196,25 @@ async fn get_posts(
     }
 }
 
+async fn delete_post(
+    headers: HeaderMap,
+    State(ctx): State<crate::Ctx>,
+    Json(payload): Json<DelPostData>,
+) -> Result<StatusCode, (StatusCode, Json<String>)> {
+    let username = headers.get("email").unwrap().to_str().unwrap().to_string();
+    let db_response = query!(
+        "DELETE FROM POSTS WHERE post_id = $1 AND user_email = $2",
+        payload.post_id,
+        username
+    )
+    .execute(&ctx.db)
+    .await;
+
+    match db_response {
+        Ok(_) => return Ok(StatusCode::OK),
+        Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
+    }
+}
 #[derive(Serialize, Deserialize)]
 struct ErrorInfo {
     info: String,
@@ -208,4 +235,8 @@ struct Post {
     post_like_count: i32,
     post_comment_count: i32,
     post_time: String,
+}
+#[derive(Serialize, Deserialize)]
+struct DelPostData {
+    post_id: i32,
 }
