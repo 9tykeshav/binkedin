@@ -4,6 +4,9 @@ use sqlx::{postgres::PgPoolOptions, Postgres};
 mod httproutes;
 use dotenv::dotenv;
 use std::time::Duration;
+use tower_http::cors::{Any, CorsLayer};
+
+
 #[tokio::main]
 async fn main() {
     // initialize tracing
@@ -19,6 +22,7 @@ async fn main() {
         .expect("can't connect to database");
 
     let ctx = Ctx { db: pool };
+    let cors = CorsLayer::new().allow_methods(Any).allow_origin(Any).allow_headers(Any);
 
     // build our application with a route
     let app = Router::new()
@@ -29,7 +33,7 @@ async fn main() {
             ctx.clone(),
             httproutes::authorisation_middleware::authorisation_middleware_function,
         ))
-        .nest("/onboarding", httproutes::onboarding::login::router(ctx));
+        .nest("/onboarding", httproutes::onboarding::login::router(ctx)).layer(cors);
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
