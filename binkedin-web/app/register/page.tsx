@@ -25,10 +25,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-orange-200	 h-screen flex flex-col justify-center">
+    <div className="bg-gradient-to-r from-voodoo-500 h-screen flex flex-col justify-center">
       <h1 className="self-center text-6xl m-5 mb-9">Binkedin </h1>
       <form
-        className="bg-yellow-900  mx-9 flex flex-col rounded-md  lg:mx-64 lg:px-4"
+        className="bg-voodoo-700  mx-9 flex flex-col rounded-md  lg:mx-64 lg:px-4"
         action={testing}
       >
         <label className="flex flex-col items-center">
@@ -51,7 +51,7 @@ export default function LoginPage() {
           />
         </label>
         <button
-          className="p-3 bg-teal-300 rounded-lg w-30 my-2 self-center hover:bg-teal-500"
+          className="p-3 bg-voodoo-600 rounded-lg w-30 my-2 self-center hover:bg-voodoo-900"
           type="submit"
         >
           Submit
