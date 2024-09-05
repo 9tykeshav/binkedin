@@ -1,10 +1,14 @@
 "use client";
-import * as React from "react";
-import { useState, useEffect } from "react";
 
-function createUser(email: any, pswrd: any) {
+import * as React from "react";
+import { useRouter } from "next/navigation";
+import { doesCookiesExists, createAuthCookies } from "@/app/login/manageCookie";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+
+function Login(email: string, pswrd: string, r: AppRouterInstance) {
+  doesCookiesExists();
   let response = fetch(
-    `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}:3000/onboarding/register`,
+    `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}:3000/onboarding/login`,
     {
       method: "post",
       headers: { "Content-Type": "application/json" },
@@ -12,16 +16,25 @@ function createUser(email: any, pswrd: any) {
     }
   );
   response.then((value) => {
-    if (value.status == 201) {
-      alert("CREATED ACCOUNT");
-    } else if (value.status == 409) {
-      alert("USER ALREADY EXISTS");
+    if (value.status == 200) {
+      createAuthCookies(email, pswrd);
+    } else if (value.status == 404) {
+      // redirect to register
+      alert(
+        "You have not registered yet, redirecting you to registration page"
+      );
+      r.push("/register");
+    } else {
+      console.log("check netwrking tab ;)");
+      value.text().then((e) => console.log(e));
     }
   });
 }
-export default function RegisterPage() {
-  function HandleRegister(FormData: FormData) {
-    createUser(FormData.get("email"), FormData.get("password"));
+
+export default function LoginPage() {
+  let router = useRouter();
+  function HandleLogin(FormData: any) {
+    Login(FormData.get("email"), FormData.get("password"), router);
   }
 
   return (
@@ -29,7 +42,7 @@ export default function RegisterPage() {
       <h1 className="self-center text-6xl m-5 mb-9">Binkedin </h1>
       <form
         className="bg-voodoo-700  mx-9 flex flex-col rounded-md  lg:mx-64 lg:px-4"
-        action={HandleRegister}
+        action={HandleLogin}
       >
         <label className="flex flex-col items-center">
           <h1>Enter your email:</h1>
@@ -54,7 +67,7 @@ export default function RegisterPage() {
           className="p-3 bg-voodoo-600 rounded-lg w-30 my-2 self-center hover:bg-voodoo-900"
           type="submit"
         >
-          Submit
+          Login
         </button>
       </form>
     </div>
