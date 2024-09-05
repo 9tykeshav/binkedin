@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { doesCookiesExists, createAuthCookies } from "@/app/login/manageCookie";
+import {
+  doesCookiesExists,
+  createAuthCookies,
+} from "@/app/actions/manageCookie";
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 function Login(email: string, pswrd: string, r: AppRouterInstance) {
-  doesCookiesExists();
   let response = fetch(
     `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}:3000/onboarding/login`,
     {
@@ -18,6 +20,7 @@ function Login(email: string, pswrd: string, r: AppRouterInstance) {
   response.then((value) => {
     if (value.status == 200) {
       createAuthCookies(email, pswrd);
+      alert("go to home page, cookies set");
     } else if (value.status == 404) {
       // redirect to register
       alert(

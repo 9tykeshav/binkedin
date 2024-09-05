@@ -13,7 +13,12 @@ export async function doesCookiesExists() {
     return true;
   }
 }
-
+export async function getAuthCookies() {
+  const email = cookieStore.get("email");
+  const password = cookieStore.get("psrwd");
+  // await doesCookiesExists(); //for debbugging
+  return [email, password];
+}
 export async function createAuthCookies(email: string, pswrd: string) {
   cookieStore.set("email", email);
   cookieStore.set("psrwd", pswrd);
