@@ -2,7 +2,7 @@ use axum::{
     debug_handler,
     extract::State,
     http::StatusCode,
-    routing::{get, post},
+    routing::post,
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,7 @@ use sqlx::query_as;
 
 pub fn router<S>(state: crate::Ctx) -> Router<S> {
     let router = Router::new()
-        .route("/login", get(login_handler))
+        .route("/login", post(login_handler))
         .route("/register", post(register))
         .with_state(state);
     router
@@ -22,8 +22,8 @@ async fn login_handler(
 ) -> (StatusCode, Json<User>) {
     let data = query_as!(
         DbData,
-        "SELECT * FROM users WHERE email = $1",
-        payload.email
+        "SELECT * FROM users WHERE email = $1 AND password=$2",
+        payload.email, payload.password
     )
     .fetch_one(&ctx.db)
     .await

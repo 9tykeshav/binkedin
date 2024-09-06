@@ -1,8 +1,7 @@
 use axum::{
     body::Bytes,
     debug_handler,
-    extract::Multipart,
-    extract::State,
+    extract::{Multipart, Query, State},
     http::{HeaderMap, StatusCode},
     routing::post,
     Json, Router,
@@ -173,11 +172,12 @@ async fn handle_post(
     }
 }
 #[debug_handler]
+// TODO IMPLEMENT NOT FOUND FOR NOOT OFUND USERS
 async fn get_posts(
     State(ctx): State<crate::Ctx>,
-    Json(payload): Json<GetPostData>,
+    payload: Query<GetPostData>,
 ) -> Result<(StatusCode, Json<Vec<Post>>), (StatusCode, Json<String>)> {
-    let email = payload.email;
+    let email = payload.email.clone();
     let data_fetched = query_as!(
         Post,
         "SELECT post_id ,caption ,image_url 
