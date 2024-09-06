@@ -1,14 +1,17 @@
 import * as React from "react";
 import { getAuthCookies } from "@/app/actions/manageCookie";
-import { RequestCookie } from "next/dist/compiled/@edge-runtime/cookies";
 import NameCard from "@/app/home/name-tag";
-
+import Posts from "@/app/home/posts";
+import { cookies } from "next/headers";
 export default function Home() {
-  let auth = getAuthCookies();
+  const cookieStore = cookies();
+  const email = cookieStore.get("email")?.value;
+  const password = cookieStore.get("psrwd")?.value;
 
   return (
     <div>
-      <NameCard auth={auth}></NameCard>
+      <NameCard auth={[email, password]}></NameCard>
+      <Posts auth={[email, password]}></Posts>
     </div>
   );
 }
