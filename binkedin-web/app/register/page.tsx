@@ -1,10 +1,11 @@
 "use client";
 import * as React from "react";
 import { useState, useEffect } from "react";
-
-function createUser(email: any, pswrd: any) {
+import { useRouter } from "next/navigation";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+function createUser(email: any, pswrd: any, r: AppRouterInstance) {
   let response = fetch(
-    `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}:3000/onboarding/register`,
+    `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}/onboarding/register`,
     {
       method: "post",
       headers: { "Content-Type": "application/json" },
@@ -14,14 +15,16 @@ function createUser(email: any, pswrd: any) {
   response.then((value) => {
     if (value.status == 201) {
       alert("CREATED ACCOUNT");
+      r.push("/login");
     } else if (value.status == 409) {
       alert("USER ALREADY EXISTS");
     }
   });
 }
 export default function RegisterPage() {
+  const router = useRouter();
   function HandleRegister(FormData: FormData) {
-    createUser(FormData.get("email"), FormData.get("password"));
+    createUser(FormData.get("email"), FormData.get("password"), router);
   }
 
   return (
@@ -30,6 +33,7 @@ export default function RegisterPage() {
       <form
         className="bg-voodoo-700  mx-9 flex flex-col rounded-md  lg:mx-64 lg:px-4"
         action={HandleRegister}
+        autoComplete="off"
       >
         <label className="flex flex-col items-center">
           <h1>Enter your email:</h1>

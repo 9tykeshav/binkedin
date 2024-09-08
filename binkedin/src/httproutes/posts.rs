@@ -29,7 +29,6 @@ async fn handle_post(
     headers: HeaderMap,
     mut multipart: Multipart,
 ) -> Result<StatusCode, (StatusCode, Json<ErrorInfo>)> {
-    let mut json_bytes = Bytes::default();
     let mut image_bytes = Bytes::default();
     let mut json: Json<JsonData> = Json(JsonData {
         caption: "".to_string(),
@@ -37,11 +36,15 @@ async fn handle_post(
     while let Some(field) = multipart.next_field().await.unwrap() {
         println!("we are at the top of the while loop!!");
         let name = field.name().unwrap().to_string();
-        if name == "data" {
-            json_bytes = field.bytes().await.unwrap();
+        if name == "caption" {
+            json = Json(JsonData { caption: std::str::from_utf8(&field.bytes().await.unwrap()).unwrap().to_string() });
+            println!("{:?}", json)
+         
         } else if name == "image" {
             image_bytes = field.bytes().await.unwrap();
-        } else {
+        }
+        
+         else {
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorInfo {
@@ -49,19 +52,8 @@ async fn handle_post(
                 }),
             ));
         }
-        match Json::<JsonData>::from_bytes(&json_bytes) {
-            Ok(j) => {
-                json = j;
-            }
-            Err(er) => {
-                return Err((
-                    StatusCode::BAD_REQUEST,
-                    Json(ErrorInfo {
-                        info: er.body_text(),
-                    }),
-                ));
-            }
-        }
+
+      
     }
 
     let dyn_image;
@@ -182,7 +174,7 @@ async fn get_posts(
         Post,
         "SELECT post_id ,caption ,image_url 
                                 ,post_like_count ,post_comment_count 
-                                ,post_time FROM posts WHERE user_email = $1",
+                                ,post_time FROM posts WHERE user_email = $1 ORDER BY post_id DESC",
         email
     )
     .fetch_all(&ctx.db)
@@ -220,6 +212,7 @@ struct ErrorInfo {
     info: String,
 }
 #[derive(Serialize, Deserialize)]
+#[derive(Debug)]
 struct JsonData {
     caption: String,
 }

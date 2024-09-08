@@ -10,7 +10,7 @@ import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.share
 
 function Login(email: string, pswrd: string, r: AppRouterInstance) {
   let response = fetch(
-    `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}:3000/onboarding/login`,
+    `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}/onboarding/login`,
     {
       method: "post",
       headers: { "Content-Type": "application/json" },
@@ -21,6 +21,7 @@ function Login(email: string, pswrd: string, r: AppRouterInstance) {
     if (value.status == 200) {
       createAuthCookies(email, pswrd);
       alert("go to home page, cookies set");
+      r.push("/home");
     } else if (value.status == 404) {
       // redirect to register
       alert(
@@ -46,6 +47,7 @@ export default function LoginPage() {
       <form
         className="bg-voodoo-700  mx-9 flex flex-col rounded-md  lg:mx-64 lg:px-4"
         action={HandleLogin}
+        autoComplete="off"
       >
         <label className="flex flex-col items-center">
           <h1>Enter your email:</h1>

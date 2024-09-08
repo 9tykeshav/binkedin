@@ -2,12 +2,14 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import Post from "@/app/home/postCard";
+import PostCardSkeleton from "./postCardSkeleton";
 export default function Posts({ auth }: any) {
-  const [Posts, setPosts] = useState([{}]);
+  const [Posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     console.log("AUTH : ", auth);
     let response = fetch(
-      `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}:3000/api/post?email=${auth[0]}`,
+      `http://${process.env.NEXT_PUBLIC_IP_ADDR_FOR_SERVICES}/api/post?email=${auth[0]}`,
       {
         method: "get",
         headers: {
@@ -21,10 +23,15 @@ export default function Posts({ auth }: any) {
       if (resp.status == 302) {
         resp.json().then((posts) => {
           setPosts(posts);
+          setIsLoading(false);
         });
       }
     });
   }, [auth]);
+
+  if (isLoading) {
+    return <PostCardSkeleton />;
+  }
 
   return (
     <div>
