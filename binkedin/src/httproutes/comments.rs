@@ -2,7 +2,7 @@ use axum::{
     self,
     body::Body,
     debug_handler,
-    extract::State,
+    extract::{Query, State},
     http::{HeaderMap, Response, StatusCode},
     response::IntoResponse,
     routing::post,
@@ -31,14 +31,14 @@ async fn handle_post_comment(
     query!(
         "INSERT INTO comments (author_email, post_id, content) VALUES ($1,$2,$3);",
         author_email,
-        payload.post_id,
+        payload.post_id.parse::<i32>().unwrap(),
         payload.content
     )
     .execute(&ctx.db)
     .await?;
     query!(
         "UPDATE posts SET post_comment_count = post_comment_count +1 WHERE post_id = $1",
-        payload.post_id
+        payload.post_id.parse::<i32>().unwrap()
     )
     .execute(&ctx.db)
     .await?;
@@ -47,13 +47,13 @@ async fn handle_post_comment(
 
 async fn handle_get_comments(
     State(ctx): State<crate::Ctx>,
-    Json(payload): Json<GetCommentData>,
+    Query(payload): Query<GetCommentData>,
 ) -> Result<Json<Vec<Comment>>, ApiError> {
     let comments = Json(
         query_as!(
             Comment,
-            "SELECT * FROM comments WHERE post_id = $1 ",
-            payload.post_id
+            "SELECT * FROM comments WHERE post_id = $1 ORDER BY comment_id desc",
+            payload.postid
         )
         .fetch_all(&ctx.db)
         .await?,
@@ -63,12 +63,12 @@ async fn handle_get_comments(
 
 #[derive(Serialize, Deserialize)]
 struct CommentData {
-    post_id: i32,
+    post_id: String,
     content: String,
 }
 #[derive(Serialize, Deserialize)]
 struct GetCommentData {
-    post_id: i32,
+    postid: i32,
 }
 #[derive(Serialize, Deserialize)]
 struct Comment {

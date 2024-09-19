@@ -1,10 +1,4 @@
-use axum::{
-    debug_handler,
-    extract::State,
-    http::StatusCode,
-    routing::post,
-    Json, Router,
-};
+use axum::{debug_handler, extract::State, http::StatusCode, routing::post, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::query_as;
 
@@ -23,7 +17,8 @@ async fn login_handler(
     let data = query_as!(
         DbData,
         "SELECT * FROM users WHERE email = $1 AND password=$2",
-        payload.email, payload.password
+        payload.email,
+        payload.password
     )
     .fetch_one(&ctx.db)
     .await

@@ -16,10 +16,7 @@ use uuid;
 
 pub fn post_routes<S>(state: crate::Ctx) -> Router<S> {
     Router::new()
-        .route(
-            "/post",
-            post(handle_post).get(get_posts).delete(delete_post),
-        )
+        .route("/post", post(handle_post).get(get_post).delete(delete_post))
         .with_state(state)
 }
 
@@ -37,14 +34,15 @@ async fn handle_post(
         println!("we are at the top of the while loop!!");
         let name = field.name().unwrap().to_string();
         if name == "caption" {
-            json = Json(JsonData { caption: std::str::from_utf8(&field.bytes().await.unwrap()).unwrap().to_string() });
+            json = Json(JsonData {
+                caption: std::str::from_utf8(&field.bytes().await.unwrap())
+                    .unwrap()
+                    .to_string(),
+            });
             println!("{:?}", json)
-         
         } else if name == "image" {
             image_bytes = field.bytes().await.unwrap();
-        }
-        
-         else {
+        } else {
             return Err((
                 StatusCode::BAD_REQUEST,
                 Json(ErrorInfo {
@@ -52,8 +50,6 @@ async fn handle_post(
                 }),
             ));
         }
-
-      
     }
 
     let dyn_image;
@@ -163,28 +159,28 @@ async fn handle_post(
         }
     }
 }
+
 #[debug_handler]
-// TODO IMPLEMENT NOT FOUND FOR NOOT OFUND USERS
-async fn get_posts(
+async fn get_post(
     State(ctx): State<crate::Ctx>,
     payload: Query<GetPostData>,
-) -> Result<(StatusCode, Json<Vec<Post>>), (StatusCode, Json<String>)> {
-    let email = payload.email.clone();
-    let data_fetched = query_as!(
-        Post,
-        "SELECT post_id ,caption ,image_url 
+) -> Result<(StatusCode, Json<PostData>), StatusCode> {
+    let response = query_as!(
+        PostData,
+        "SELECT user_email, post_id ,caption ,image_url 
                                 ,post_like_count ,post_comment_count 
-                                ,post_time FROM posts WHERE user_email = $1 ORDER BY post_id DESC",
-        email
+                                ,post_time FROM posts WHERE post_id = $1 ",
+        payload.postid
     )
-    .fetch_all(&ctx.db)
+    .fetch_one(&ctx.db)
     .await;
 
-    match data_fetched {
-        Ok(d) => {
-            return Ok((StatusCode::FOUND, Json(d)));
+    match response {
+        Ok(data) => return Ok((StatusCode::FOUND, Json(data))),
+        Err(e) => {
+            println!("{:?}", e);
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
         }
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
     }
 }
 
@@ -207,21 +203,57 @@ async fn delete_post(
         Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(e.to_string()))),
     }
 }
+
+// #[debug_handler]
+// async fn get_post( headers: HeaderMap,
+//     State(ctx): State<crate::Ctx>,
+//     post_id : Query<PostId>,
+// )-> Result<(StatusCode, Json<PostData>), StatusCode> {
+
+//     let data_fetched = query_as!(PostData,
+//         "SELECT user_email, posts.post_id ,caption ,image_url
+//                                 ,post_like_count ,post_comment_count
+//                                 ,post_time, comments.content AS comment_data FROM posts JOIN comments ON posts.post_id = comments.post_id "
+//     )
+//     .fetch_one(&ctx.db)
+//     .await;
+
+//     println!("{:?}", post_id);
+//     Err(StatusCode::OK)
+
+// }
+
+#[derive(Serialize, Deserialize)]
+struct PostData {
+    user_email: String,
+    post_id: i32,
+    caption: Option<String>,
+    image_url: Option<String>,
+    post_like_count: i32,
+    post_comment_count: i32,
+    post_time: String,
+}
 #[derive(Serialize, Deserialize)]
 struct ErrorInfo {
     info: String,
 }
-#[derive(Serialize, Deserialize)]
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct JsonData {
     caption: String,
 }
 #[derive(Serialize, Deserialize)]
-struct GetPostData {
+struct GetPostsData {
     email: String,
 }
+
+#[derive(Serialize, Deserialize)]
+struct GetPostData {
+    postid: i32,
+}
+
 #[derive(Serialize, Deserialize)]
 struct Post {
+    user_email: String,
     post_id: i32,
     caption: Option<String>,
     image_url: Option<String>,
@@ -231,5 +263,9 @@ struct Post {
 }
 #[derive(Serialize, Deserialize)]
 struct DelPostData {
+    post_id: i32,
+}
+#[derive(Serialize, Deserialize, Debug)]
+struct PostId {
     post_id: i32,
 }
