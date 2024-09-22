@@ -56,7 +56,7 @@ export default function Commentbox({ auth }: any) {
         {Comments.map((comment: Record<string, string>, index) => (
           <div
             key={index}
-            className="bg-voodoo-100  p-1 rounded-lg  border-2 border-voodoo-500 mt-1 mb-1"
+            className="bg-voodoo-100  p-1 rounded-lg  border-2 border-voodoo-500 mt-1 mb-1 m-1"
           >
             <div className="">
               <h1 className="m-1 text-xl">{comment["author_email"]}</h1>
@@ -66,10 +66,10 @@ export default function Commentbox({ auth }: any) {
         ))}
       </div>
 
-      <div className="fixed bottom-0 w-full flex flex-row justify-center bg-voodoo-50">
+      <div className="fixed bottom-0 w-full lg:w-3/5 lg:ml-62 flex flex-row justify-center bg-voodoo-50">
         <form action={HandleMakeComment} className="w-full">
           <input
-            className="w-full  p-2 rounded-lg border-2 border-voodoo-400"
+            className="w-full   p-2 rounded-lg border-2 border-voodoo-400"
             type="text"
             name="content"
             id=""

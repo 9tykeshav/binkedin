@@ -10,12 +10,14 @@ export default function Home() {
   const password = cookieStore.get("psrwd")?.value;
 
   return (
-    <div className="bg-voodoo-50  ">
-      <div className="bg-voodoo-50">
-        <Post auth={[email, password]}></Post>
-      </div>
-      <div className="w-full h-full">
-        <Commentbox auth={[email, password]}></Commentbox>
+    <div className="flex justify-center">
+      <div className="bg-voodoo-50  ">
+        <div className="bg-voodoo-50">
+          <Post auth={[email, password]}></Post>
+        </div>
+        <div className="w-full h-full">
+          <Commentbox auth={[email, password]}></Commentbox>
+        </div>
       </div>
     </div>
   );

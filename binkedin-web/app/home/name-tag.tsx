@@ -14,7 +14,7 @@ export default function NameCard({ auth }: any) {
         </div>
         <div className=" ">
           <input
-            className=" w-48 lg:w-96 mx-2 rounded-md px-3"
+            className=" w-48 lg:w-96 mx-2 rounded-2xl px-3"
             type="text"
             placeholder="Search"
           />
