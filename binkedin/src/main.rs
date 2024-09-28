@@ -32,6 +32,7 @@ async fn main() {
         .nest("/api", httproutes::comments::comments_routes(ctx.clone()))
         .nest("/api", httproutes::likes::likes_routes(ctx.clone()))
         .nest("/api", httproutes::profile::home_routes(ctx.clone()))
+        .nest("/api", httproutes::followers::follow_routes(ctx.clone()))
         .layer(axum::middleware::from_fn_with_state(
             ctx.clone(),
             httproutes::authorisation_middleware::authorisation_middleware_function,

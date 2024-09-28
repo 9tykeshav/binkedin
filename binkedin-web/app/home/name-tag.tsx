@@ -13,11 +13,18 @@ export default function NameCard({ auth }: any) {
           {name} {ps}
         </div>
         <div className=" ">
-          <input
-            className=" w-48 lg:w-96 mx-2 rounded-2xl px-3"
-            type="text"
-            placeholder="Search"
-          />
+          <form
+            action={(f) => {
+              router.push(`/profile/${f.get("username")}`);
+            }}
+          >
+            <input
+              className=" w-48 lg:w-96 mx-2 rounded-2xl px-3"
+              type="text"
+              placeholder="Search"
+              name="username"
+            />
+          </form>
         </div>
         <button
           className="bg-voodoo-600  m-1 p-1 rounded-lg w-8"

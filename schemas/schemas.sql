@@ -36,6 +36,15 @@ CREATE TABLE
         FOREIGN KEY (post_id) REFERENCES posts (post_id)
     );
 
+CREATE TABLE followers (
+    follow_id SERIAL PRIMARY KEY,
+    follower_username VARCHAR(100) NOT NULL,
+    followee_username VARCHAR(100) NOT NULL,
+    request_status VARCHAR(15) NOT NULL,
+    FOREIGN KEY (followee_username) REFERENCES users (email),
+    FOREIGN KEY (follower_username) REFERENCES users (email),
+    UNIQUE (followee_username,follower_username)
+)
 -- INSERT INTO posts
 --     (user_email, caption, image_url, 
 --     post_like_count, post_comment_count, 

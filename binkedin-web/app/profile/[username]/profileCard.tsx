@@ -1,7 +1,8 @@
+"use client";
 import * as React from "react";
-
+import { useParams } from "next/navigation";
 export default function ProfileCard({
-  username = "keshav",
+  username = useParams<{ username: string }>().username,
   followers = 500,
   following = 600,
 }) {
