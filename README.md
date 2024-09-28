@@ -1,5 +1,5 @@
 # binkedin 
-Binked is an attempt to clone Linkedin, made with axum & nextjs 
+Binkedin is an attempt to make a Linkedin alike social media platfrom, made with axum & nextjs 
 # Running locally 
 - Have postgreSQL installed
 - Rust installed
